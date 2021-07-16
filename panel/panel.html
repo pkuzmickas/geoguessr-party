@@ -1,12 +1,50 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="panel.css">
-  </head>
-  <body>
-    <div class="container">
-      <h1>GeoGuessr <span class="red">Party</span></h2>
+
+<head>
+  <link rel="stylesheet" href="panel.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h1>GeoGuessr <span class="red">Party</span></h1>
+      </div>
     </div>
+    <div class="row">
+      <div class="col">
+        <img src="../images/players.svg" height="70px">
+      </div>
+      <div class="col">
+        <img src="../images/scores.svg" height="70px">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <h3>Players</h3>
+      </div>
+      <div class="col">
+        <h3>Scores</h3>
+      </div>
+    </div>
+    <div id="playerList">
+    </div>
+    <div class="row">
+      <hr>
+    </div>
+    <div class="row">
+      <div class="col">
+        <button type="button" class="btn btn-success" id="startGame">Start Game</button>
+      </div>
+      <div class="col">
+        <button type="button" class="btn btn-secondary" id="blockStart">Block Start</button>
+      </div>
+    </div>
+    <script src="../scripts/socket.io.js"></script>
     <script src="panel.js"></script>
-  </body>
+</body>
+
 </html>

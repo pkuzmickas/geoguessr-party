@@ -10,7 +10,7 @@
         "storage",
         "activeTab",
         "scripting"
-    ], 
+    ],
     "action": {
         "default_popup": "popup/popup.html",
         "default_icon": {
@@ -36,7 +36,8 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "panel/panel.html"
+                "panel/panel.html",
+                "scripts/socket.io.js"
             ],
             "matches": [
                 "https://*/*"

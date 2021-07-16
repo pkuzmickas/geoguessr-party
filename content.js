@@ -1,25 +1,23 @@
-
-main();
-
 // GLOBAL VARIABLES
 
 const panel = {
     size: "400px",
-    open: false,
-    init: false
+    open: false
 }
-
-const players = [];
 
 let iframe;
 let nextBody;
 let header;
 let panelConn;
+const id = Date.now();
+
+main();
+
 // FUNCTIONS
 
 function main() {
-    listenToPopup();
-    disableStart();
+    listenToMessages();
+    initPanel();
 }
 
 function initPanel() {
@@ -32,6 +30,7 @@ function initPanel() {
     iframe.style.top = "0px";
     iframe.style.right = "0px";
     iframe.style.zIndex = "20000000";
+    iframe.style.display = "none";
     iframe.src = chrome.runtime.getURL("panel/panel.html")
     document.body.appendChild(iframe);
 
@@ -41,21 +40,16 @@ function initPanel() {
 }
 
 function openPanel() {
-    if (!panel.init) {
-        panel.init = true;
-        initPanel();
-    }
     panel.open = true;
     iframe.style.width = panel.size;
     iframe.style.display = "block";
     nextBody.style.width = "calc(100% - 400px)";
     header.style.width = "calc(100% - 400px)";
-    // connectToPanel();
+    connectToPanel();
 }
 
 async function connectToPanel() {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    panelConn = chrome.tabs.connect(tab.id, { name: "panel" });
+    panelConn = chrome.runtime.connect({ name: `panel-${id}` });
 }
 
 function closePanel() {
@@ -75,47 +69,21 @@ function disableStart() {
     startButton.style.backgroundColor = "black";
 }
 
-function connectToBackground() {
-    // const port = chrome.runtime.connect({ name: "content" });
-    // port.onMessage.addListener(function (msg) {
-    //     console.log("content", msg);
-    //     switch (msg.cmd) {
-    //         case "open_panel":
-    //             openPanel();
-    //             break;
-    //         case "close_panel":
-    //             closePanel();
-    //             break;
-    //         default:
-    //             console.warn("unrecognised msg command:", msg);
-    //             break;
-    //     }
-    //     // port.postMessage({ answer: "Madame" });
-    //     return true
-    // });
-
-}
-
-function listenToPopup() {
+function listenToMessages() {
     chrome.runtime.onConnect.addListener(function (port) {
-        console.assert(port === "content");
-        // console.log("connect");
-        // console.log(port.sender)
-        // console.log(port.sender.tab.id)
+        if(port.name !== "content") return;
         port.onMessage.addListener(async function (msg, port) {
             console.log("msg in content", msg);
-            // console.log(port.sender)
-            // console.log(port.sender.tab.id)
             switch (msg.cmd) {
                 case "open_panel":
                     openPanel();
-                    players.push({
-                        name: msg.payload.name
-                    });
-                    // msgPanel("add_player", players[players.length-1]);
+                    msgPanel("init", {name: msg.payload.name, score: 0});
                     break;
                 case "close_panel":
                     closePanel();
+                    break;
+                case "disable_start":
+                    disableStart();
                     break;
                 default:
                     console.warn("unrecognised msg command:", msg);
@@ -128,8 +96,5 @@ function listenToPopup() {
 }
 
 function msgPanel(cmd, payload) {
-    panelConn.postMessage({ cmd, payload});
+    panelConn.postMessage({ cmd, payload });
 }
-
-// TODO: make panel listen to messages properly
-
