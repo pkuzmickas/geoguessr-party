@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 });
 
 io.on("connection", socket => {
-
+  const id = io.engine.generateId();
   console.log("user connected");
   // handle the event sent with socket.send()
   socket.on("message", (data) => {
@@ -26,13 +26,13 @@ io.on("connection", socket => {
     const msg = JSON.parse(data);
     switch (msg.cmd) {
       case "add_player":
-        const id = io.engine.generateId();
         players[id] = {
           id,
           name: msg.payload.name,
-          score: msg.payload.score
+          score: msg.payload.score,
+          leader: Object.keys(players).length === 0
         }
-        socket.emit("message", createMessage("update_players", Object.values(players)));
+        io.emit("message", createMessage("update_players", Object.values(players)));
         break;
       default:
         console.log("unrecognized command!");
@@ -41,10 +41,18 @@ io.on("connection", socket => {
     // socket.send("message from server");
   });
 
+  socket.on("disconnect", (reason) => {
+    console.log("player disconnected, reason:", reason);
+    if (players[id]) {
+      delete players[id];
+    }
+    socket.broadcast.emit("message", createMessage("update_players", Object.values(players)));
+  });
+
 });
 
 function createMessage(cmd, payload) {
-  return JSON.stringify({cmd, payload});
+  return JSON.stringify({ cmd, payload });
 }
 
 server.listen(3000, () => {

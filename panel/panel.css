@@ -28,3 +28,13 @@ hr {
     width: 100%;
     border-top: 1px solid white!important;
 }
+
+.btn {
+    width: 130px;
+}
+
+footer {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+}

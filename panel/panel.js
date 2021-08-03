@@ -1,15 +1,17 @@
 // name, score
 let players = [];
-const disableStartButton = document.getElementById("blockStart");
+const exitButton = document.getElementById("exitGame");
 const startButton = document.getElementById("startGame");
 let contentConn;
 let id;
+let socket;
+console.log("panel script init");
 
-// Messages from chrome content/background scripts
-chrome.runtime.onConnect.addListener(function (port) {
+function onConnectListener(port) {
+  console.log("panel runtime onconnect");
   if (!id && port.name.startsWith("panel-")) {
     id = port.name.substring(6);
-    console.log("assigning id:",id);
+    console.log("assigning id:", id);
   }
   if (port.name !== `panel-${id}`) return;
   port.onMessage.addListener(function (msg) {
@@ -18,11 +20,20 @@ chrome.runtime.onConnect.addListener(function (port) {
       case "init":
         initSockets(msg.payload.name, msg.payload.score);
         break;
+      case "close":
+        console.log("closed the socket connection");
+        socket.close();
+        break;
     }
     console.log("received at panel", msg);
   });
-});
-
+  console.log("removing listener");
+  chrome.runtime.onConnect.removeListener(onConnectListener);
+}
+// Messages from chrome content/background scripts
+console.log("adding listener", onConnectListener);
+chrome.runtime.onConnect.addListener(onConnectListener);
+console.log("has listener?", chrome.runtime.onConnect.hasListener(onConnectListener));
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
   htmlList.innerHTML = "";
@@ -42,7 +53,7 @@ function buildPlayerList() {
 // Messages from backend sockets
 // Parameters: name - new player name, score - new player score
 function initSockets(name, score) {
-  let socket = io("ws://localhost:3000");
+  socket = io("ws://localhost:3000");
   socket.send(createSocketMessage("add_player", { name, score }))
   socket.on("message", data => {
     const msg = JSON.parse(data);
@@ -71,7 +82,7 @@ async function msgContent(cmd, payload) {
   contentConn.postMessage({ cmd, payload });
 }
 
-disableStartButton.addEventListener("click", async () => {
-  msgContent("disable_start", null);
+exitButton.addEventListener("click", async () => {
+  msgContent("close_panel");
 });
 

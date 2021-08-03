@@ -9,6 +9,8 @@ let iframe;
 let nextBody;
 let header;
 let panelConn;
+let previousStartButton = {};
+let startButton;
 const id = Date.now();
 
 main();
@@ -17,7 +19,6 @@ main();
 
 function main() {
     listenToMessages();
-    initPanel();
 }
 
 function initPanel() {
@@ -31,6 +32,7 @@ function initPanel() {
     iframe.style.right = "0px";
     iframe.style.zIndex = "20000000";
     iframe.style.display = "none";
+    iframe.setAttribute("id", "ggPartyPanel");
     iframe.src = chrome.runtime.getURL("panel/panel.html")
     document.body.appendChild(iframe);
 
@@ -49,41 +51,61 @@ function openPanel() {
 }
 
 async function connectToPanel() {
+    console.log("connecting to panel, ID:", id);
     panelConn = chrome.runtime.connect({ name: `panel-${id}` });
+    console.log("connected:", panelConn);
 }
 
 function closePanel() {
     panel.open = false;
-    iframe.style.width = "0px";
-    iframe.style.display = "none";
+    iframe.parentNode.removeChild(iframe);
+    iframe = undefined;
     nextBody.style.width = "100%";
     header.style.width = "100%";
 }
 
 function disableStart() {
-    let startButton = document.querySelector('[data-qa="start-challenge-button"]');
+    startButton = document.querySelector('[data-qa="start-challenge-button"]');
     if (!startButton) {
         startButton = document.querySelector('[data-qa="join-challenge-button"]');
     }
+    previousStartButton = startButton.cloneNode(true);
+    console.log("copied:", startButton, "into", previousStartButton);
     startButton.setAttribute("disabled", "true");
     startButton.style.backgroundColor = "black";
+    startButton.querySelector(".button__label").innerHTML = "NESPAUSK BLET :)"
+}
+
+function enableStart() {
+    startButton.removeAttribute("disabled");
+    startButton.style.backgroundColor = previousStartButton.style.backgroundColor;
+    startButton.querySelector(".button__label").innerHTML = previousStartButton.querySelector(".button__label").innerHTML;
 }
 
 function listenToMessages() {
     chrome.runtime.onConnect.addListener(function (port) {
-        if(port.name !== "content") return;
+        if (port.name !== "content") return;
         port.onMessage.addListener(async function (msg, port) {
             console.log("msg in content", msg);
             switch (msg.cmd) {
                 case "open_panel":
-                    openPanel();
-                    msgPanel("init", {name: msg.payload.name, score: 0});
+                    initPanel();
+                    setTimeout(() => {
+                        openPanel();
+                        disableStart();
+                        msgPanel("init", { name: msg.payload.name, score: 0 });
+                    }, 1000);
                     break;
                 case "close_panel":
+                    msgPanel("close");
+                    enableStart();
                     closePanel();
+                    chrome.storage.local.set({ started: false }, function () {
+                        console.log('Started is set to ' + false);
+                    });
                     break;
-                case "disable_start":
-                    disableStart();
+                case "is_panel_open":
+                    port.postMessage({ cmd: "is_panel_open", payload: !!document.getElementById("ggPartyPanel") });
                     break;
                 default:
                     console.warn("unrecognised msg command:", msg);
@@ -96,5 +118,6 @@ function listenToMessages() {
 }
 
 function msgPanel(cmd, payload) {
+    console.log("sending panel message:", { cmd, payload }, panelConn);
     panelConn.postMessage({ cmd, payload });
 }
