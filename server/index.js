@@ -32,6 +32,9 @@ io.on("connection", socket => {
           score: msg.payload.score,
           leader: Object.keys(players).length === 0
         }
+        console.log("adding player:", players[id]);
+        console.log("current players:", players);
+        socket.emit("message", createMessage("set_current_player", players[id]));
         io.emit("message", createMessage("update_players", Object.values(players)));
         break;
       default:

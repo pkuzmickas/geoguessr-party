@@ -4,6 +4,7 @@ const exitButton = document.getElementById("exitGame");
 const startButton = document.getElementById("startGame");
 let contentConn;
 let id;
+let currentPlayer;
 let socket;
 console.log("panel script init");
 
@@ -63,7 +64,9 @@ function initSockets(name, score) {
         players = [...msg.payload];
         buildPlayerList();
         break;
-
+      case "set_current_player":
+        updateCurrentPlayer(msg.payload);
+        break;
       default:
         break;
     }
@@ -85,4 +88,14 @@ async function msgContent(cmd, payload) {
 exitButton.addEventListener("click", async () => {
   msgContent("close_panel");
 });
+
+function updateCurrentPlayer(player) {
+  currentPlayer = player;
+  console.log("currentPLayer:", currentPlayer);
+  if(!currentPlayer.leader) {
+    startButton.style.display = "none";
+  } else {
+    startButton.style.display = "unset";
+  }
+}
 
