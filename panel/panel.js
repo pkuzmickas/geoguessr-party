@@ -6,6 +6,12 @@ let contentConn;
 let id;
 let currentPlayer;
 let socket;
+let currentTab;
+
+chrome.tabs.query({active: true, currentWindow: true},function(tabs){
+	currentTab = tabs[0];
+  console.log("set panel's current tab to:", currentTab);
+});
 console.log("panel script init");
 
 function onConnectListener(port) {
@@ -15,11 +21,15 @@ function onConnectListener(port) {
     console.log("assigning id:", id);
   }
   if (port.name !== `panel-${id}`) return;
+  console.log("reached onMessage in panel");
   port.onMessage.addListener(function (msg) {
     console.log("message in panel", msg);
     switch (msg.cmd) {
       case "init":
         initSockets(msg.payload.name, msg.payload.score);
+        break;
+      case "set_score":
+        socket.send(createSocketMessage("set_score", {id: currentPlayer.id, totalScore: msg.payload.totalScore}));
         break;
       case "close":
         console.log("closed the socket connection");
@@ -28,13 +38,10 @@ function onConnectListener(port) {
     }
     console.log("received at panel", msg);
   });
-  console.log("removing listener");
   chrome.runtime.onConnect.removeListener(onConnectListener);
 }
 // Messages from chrome content/background scripts
-console.log("adding listener", onConnectListener);
 chrome.runtime.onConnect.addListener(onConnectListener);
-console.log("has listener?", chrome.runtime.onConnect.hasListener(onConnectListener));
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
   htmlList.innerHTML = "";
@@ -67,6 +74,9 @@ function initSockets(name, score) {
       case "set_current_player":
         updateCurrentPlayer(msg.payload);
         break;
+      case "start_game":
+        msgContent("start_game");
+        break;
       default:
         break;
     }
@@ -79,9 +89,13 @@ function createSocketMessage(cmd, payload) {
 
 async function msgContent(cmd, payload) {
   if (!contentConn) {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    contentConn = chrome.tabs.connect(tab.id, { name: "content" });
+    console.log("no contentConn!");
+    // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    contentConn = chrome.tabs.connect(currentTab.id, { name: "content" });
+    console.log("set contentConn tab:", currentTab);
+    // console.log("got tab:", tab.index);
   }
+  console.log("sending message from panel to content:", {cmd, payload}, contentConn);
   contentConn.postMessage({ cmd, payload });
 }
 
@@ -89,10 +103,13 @@ exitButton.addEventListener("click", async () => {
   msgContent("close_panel");
 });
 
+startButton.addEventListener("click", async () => {
+  socket.send(createSocketMessage("start_game"))
+});
+
 function updateCurrentPlayer(player) {
   currentPlayer = player;
-  console.log("currentPLayer:", currentPlayer);
-  if(!currentPlayer.leader) {
+  if (!currentPlayer.leader) {
     startButton.style.display = "none";
   } else {
     startButton.style.display = "unset";

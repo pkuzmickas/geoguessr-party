@@ -25,6 +25,15 @@ io.on("connection", socket => {
     console.log("received message:", data);
     const msg = JSON.parse(data);
     switch (msg.cmd) {
+      case "start_game":
+        console.log("received message to start game, starting...");
+        io.emit("message", createMessage("start_game"));
+        break;
+      case "set_score":
+        console.log(`changing player ${msg.payload.id} score to ${msg.payload.totalScore}`);
+        players[msg.payload.id].score = msg.payload.totalScore;
+        sendUpdatePlayersMessage();
+        break;
       case "add_player":
         players[id] = {
           id,
@@ -35,7 +44,7 @@ io.on("connection", socket => {
         console.log("adding player:", players[id]);
         console.log("current players:", players);
         socket.emit("message", createMessage("set_current_player", players[id]));
-        io.emit("message", createMessage("update_players", Object.values(players)));
+        sendUpdatePlayersMessage();
         break;
       default:
         console.log("unrecognized command!");
@@ -62,3 +71,6 @@ server.listen(3000, () => {
   console.log('listening on *:3000');
 });
 
+function sendUpdatePlayersMessage() {
+  io.emit("message", createMessage("update_players", Object.values(players)));
+}
