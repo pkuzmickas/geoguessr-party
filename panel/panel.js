@@ -1,27 +1,26 @@
-// name, score
+// Player object: {name: string, score: string, leader: boolean}
 let players = [];
 const exitButton = document.getElementById("exitGame");
 const startButton = document.getElementById("startGame");
+const continueButton = document.getElementById("continueButton");
+// Connection to content script
 let contentConn;
-let id;
+// Current player of the tab
 let currentPlayer;
+// Socket connection to the server
 let socket;
+
 let currentTab;
 
-chrome.tabs.query({active: true, currentWindow: true},function(tabs){
-	currentTab = tabs[0];
-  console.log("set panel's current tab to:", currentTab);
+chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+  currentTab = tabs[0];
 });
 console.log("panel script init");
 
+// Listening to messages from content script
 function onConnectListener(port) {
   console.log("panel runtime onconnect");
-  if (!id && port.name.startsWith("panel-")) {
-    id = port.name.substring(6);
-    console.log("assigning id:", id);
-  }
-  if (port.name !== `panel-${id}`) return;
-  console.log("reached onMessage in panel");
+  if (port.name !== 'panel') return;
   port.onMessage.addListener(function (msg) {
     console.log("message in panel", msg);
     switch (msg.cmd) {
@@ -29,7 +28,16 @@ function onConnectListener(port) {
         initSockets(msg.payload.name, msg.payload.score);
         break;
       case "set_score":
-        socket.send(createSocketMessage("set_score", {id: currentPlayer.id, totalScore: msg.payload.totalScore}));
+        socket.send(createSocketMessage("set_score", { id: currentPlayer.id, totalScore: msg.payload.totalScore }));
+        break;
+      case "hide_start":
+        startButton.style.display = "none";
+        break;
+      case "hide_continue":
+        continueButton.style.display = "none";
+        break;
+      case "show_continue":
+        showStartButton(continueButton);
         break;
       case "close":
         console.log("closed the socket connection");
@@ -42,6 +50,8 @@ function onConnectListener(port) {
 }
 // Messages from chrome content/background scripts
 chrome.runtime.onConnect.addListener(onConnectListener);
+
+// Building the HTML for player list
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
   htmlList.innerHTML = "";
@@ -66,6 +76,7 @@ function initSockets(name, score) {
   socket.on("message", data => {
     const msg = JSON.parse(data);
     console.log("received from socket:", msg);
+    // Responding to messages from the server 
     switch (msg.cmd) {
       case "update_players":
         players = [...msg.payload];
@@ -76,6 +87,9 @@ function initSockets(name, score) {
         break;
       case "start_game":
         msgContent("start_game");
+        break;
+      case "continue_game":
+        msgContent("continue_game");
         break;
       default:
         break;
@@ -89,13 +103,9 @@ function createSocketMessage(cmd, payload) {
 
 async function msgContent(cmd, payload) {
   if (!contentConn) {
-    console.log("no contentConn!");
-    // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     contentConn = chrome.tabs.connect(currentTab.id, { name: "content" });
-    console.log("set contentConn tab:", currentTab);
-    // console.log("got tab:", tab.index);
   }
-  console.log("sending message from panel to content:", {cmd, payload}, contentConn);
+  console.log("sending message from panel to content:", { cmd, payload }, contentConn);
   contentConn.postMessage({ cmd, payload });
 }
 
@@ -107,12 +117,21 @@ startButton.addEventListener("click", async () => {
   socket.send(createSocketMessage("start_game"))
 });
 
+continueButton.addEventListener("click", async () => {
+  socket.send(createSocketMessage("continue_game"))
+});
+
 function updateCurrentPlayer(player) {
   currentPlayer = player;
+  showStartButton(startButton);
+}
+
+// Only show start/continue buttons if player is leader
+function showStartButton(btn) {
   if (!currentPlayer.leader) {
-    startButton.style.display = "none";
+    btn.style.display = "none";
   } else {
-    startButton.style.display = "unset";
+    btn.style.display = "unset";
   }
 }
 

@@ -29,6 +29,10 @@ io.on("connection", socket => {
         console.log("received message to start game, starting...");
         io.emit("message", createMessage("start_game"));
         break;
+      case "continue_game":
+        console.log("received message to continue game, continuing...");
+        io.emit("message", createMessage("continue_game"));
+        break;
       case "set_score":
         console.log(`changing player ${msg.payload.id} score to ${msg.payload.totalScore}`);
         players[msg.payload.id].score = msg.payload.totalScore;

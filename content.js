@@ -5,17 +5,26 @@ const panel = {
     open: false
 }
 
+// Panel's iframe
 let iframe;
+// Game screen body/header
 let nextBody;
 let header;
+// Connection to panel's JS, using chrome.runtime ports
 let panelConn;
+// Saving unchanged start button for when stopping extension
 let previousStartButton = {};
+
 let startButton;
-const id = Date.now();
+
+// Text to show the players when their start button is disabled
+let disabledButtonText = "NESPAUSK BLET :)";
+
+// Observes the game state, checks when the result screen is up
+let stateObserver;
 
 main();
 
-console.log("hi from content");
 // FUNCTIONS
 
 function main() {
@@ -52,9 +61,7 @@ function openPanel() {
 }
 
 async function connectToPanel() {
-    console.log("connecting to panel, ID:", id);
-    panelConn = chrome.runtime.connect({ name: `panel-${id}` });
-    console.log("connected:", panelConn);
+    panelConn = chrome.runtime.connect({ name: `panel` });
 }
 
 function closePanel() {
@@ -71,10 +78,9 @@ function disableStart() {
         startButton = document.querySelector('[data-qa="join-challenge-button"]');
     }
     previousStartButton = startButton.cloneNode(true);
-    console.log("copied:", startButton, "into", previousStartButton);
     startButton.setAttribute("disabled", "true");
     startButton.style.backgroundColor = "black";
-    startButton.querySelector(".button__label").innerHTML = "NESPAUSK BLET :)"
+    startButton.querySelector(".button__label").innerHTML = disabledButtonText;
 }
 
 function enableStart() {
@@ -83,8 +89,8 @@ function enableStart() {
     startButton.querySelector(".button__label").innerHTML = previousStartButton.querySelector(".button__label").innerHTML;
 }
 
+// Listening to messages to content
 function listenToMessages() {
-    console.log("listening to messages in content");
     chrome.runtime.onConnect.addListener(function (port) {
         console.log("connection in content, port:", port);
         if (port.name !== "content") return;
@@ -103,9 +109,7 @@ function listenToMessages() {
                     msgPanel("close");
                     enableStart();
                     closePanel();
-                    chrome.storage.local.set({ started: false }, function () {
-                        console.log('Started is set to ' + false);
-                    });
+                    stateObserver.disconnect();
                     break;
                 case "is_panel_open":
                     port.postMessage({ cmd: "is_panel_open", payload: !!document.getElementById("ggPartyPanel") });
@@ -113,11 +117,13 @@ function listenToMessages() {
                 case "start_game":
                     startGame();
                     break;
+                case "continue_game":
+                    continueGame();
+                    break;
                 default:
                     console.warn("unrecognised msg command:", msg);
                     break;
             }
-            // port.postMessage({ answer: "Madame" });
             return true
         });
     });
@@ -128,25 +134,30 @@ function msgPanel(cmd, payload) {
     panelConn.postMessage({ cmd, payload });
 }
 
+function continueGame() {
+    const nextRoundButton = document.querySelector("[data-qa='close-round-result']");
+    if (nextRoundButton) {
+        nextRoundButton.removeAttribute("disabled");
+        nextRoundButton.click();
+    }
+    msgPanel("hide_continue");
+}
+
 function startGame() {
     startButton.removeAttribute("disabled");
     startButton.click();
-    // once game starts:
-    // result width change
-    // game-layout for game width
-    //gmnoprint 100%
-    // child svg 100%
+    msgPanel("hide_start");
     console.log("resizing the game window in 2 secs...");
     setTimeout(() => {
         console.log("resized the game window");
         const gameLayout = document.querySelector(".game-layout");
-        gameLayout.style.width = "calc(100% - 400px)";
+        if (gameLayout) gameLayout.style.width = "calc(100% - 400px)";
         const gameCanvas = document.querySelector("canvas");
-        gameCanvas.style.width = "100%";
+        if (gameCanvas) gameCanvas.style.width = "100%";
         const arrowsContainer = document.querySelector(".gmnoprint");
-        arrowsContainer.style.width = "100%";
-        const arrows = arrowsContainer.firstChild;
-        arrows.style.width = "100%";
+        if (arrowsContainer) arrowsContainer.style.width = "100%";
+        const arrows = arrowsContainer?.firstChild;
+        if (arrows) arrows.style.width = "100%";
         observeForResults();
     }, 2000);
 }
@@ -161,36 +172,46 @@ function observeForResults() {
 
     // Callback function to execute when mutations are observed
     const callback = function (mutationsList, observer) {
-        // Use traditional 'for loops' for IE 11
-        console.log("callback! something changed");
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 const result = document.querySelector('.result');
+                // Reached the result screen
                 if (result) {
+                    msgPanel("hide_start");
+                    msgPanel("show_continue");
+                    disableContinue();
                     result.style.width = "calc(100% - 400px)";
                     console.log("changed result size: ", result);
+                    const totalScore =
+                        document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
+                        ??
+                        document.querySelector(".score-bar__label").childNodes[1].data.toString().replace(",", "")
+                    msgPanel("set_score", { totalScore: totalScore });
                 }
-                const totalScore =
-                    document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
-                    ??
-                    document.querySelector(".score-bar__label").childNodes[1].data.toString().replace(",", "")
-                console.log("got totalscore:", totalScore)
-                msgPanel("set_score", { totalScore: totalScore });
             } else {
-                console.log('something different changes', mutation);
+                console.log('something different changed', mutation);
             }
         }
     };
 
     // Create an observer instance linked to the callback function
-    const observer = new MutationObserver(callback);
+    stateObserver = new MutationObserver(callback);
 
     // Start observing the target node for configured mutations
-    observer.observe(targetNode, config);
-
-    // Later, you can stop observing
-    // observer.disconnect();
+    stateObserver.observe(targetNode, config);
 
 }
 
-// observe for results **********
+function disableContinue() {
+    const nextRoundButton = document.querySelector("[data-qa='close-round-result']");
+    if (nextRoundButton) {
+        nextRoundButton.setAttribute("disabled", true);
+        nextRoundButton.style.backgroundColor = "black";
+        const btnText = nextRoundButton.querySelector(".button__label");
+        if (btnText) {
+            setTimeout(() => {
+                btnText.innerHTML = disabledButtonText;
+            }, 500);
+        }
+    }
+}
