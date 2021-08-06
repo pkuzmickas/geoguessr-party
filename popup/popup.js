@@ -39,8 +39,8 @@ exitButton.addEventListener("click", async () => {
 });
 
 function disableStart() {
-    let name = document.getElementById("name");
-    name.parentNode.removeChild(name);
-    let startContainer = document.getElementById("startContainer");
-    startContainer.parentNode.removeChild(startContainer);
+    let newSessionForm = document.getElementById("newSession");
+    newSessionForm.parentNode.removeChild(newSessionForm);
+    let existingSessionForm = document.getElementById("existingSession");
+    existingSessionForm.style.display = "unset";
 }

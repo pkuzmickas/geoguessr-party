@@ -3,21 +3,58 @@
 
 <head>
   <link rel="stylesheet" href="popup.css">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
 <body>
   <div class="container">
-  <h2>GeoGuessr <span class="red">Party</span></h2>
-    <div class="row align-items-center">
-      <input class="form-control" type="text" placeholder="Name" id="name">
-    </div>
-    <div class="row button-container">
-      <div class="col center" id="startContainer">
-        <button type="button" class="btn btn-success" id="startButton">Join Session</button>
+    <h2>GeoGuessr <span class="red">Party</span></h2>
+    <div class="session-container" id="newSession">
+      <div class="row">
+        <div class="col instruction">
+          Enter your name
+        </div>
       </div>
-      <div class="col center">
-        <button type="button" class="btn btn-secondary" id="exitButton">Exit Session</button>
+      <div class="row">
+        <div class="col">
+          <input class="form-control" type="text" placeholder="Name" id="name">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col instruction">
+          And join the party!
+        </div>
+      </div>
+      <!-- <div class="row">
+        <div class="col-7 pr-0">
+          <input class="form-control" type="text" placeholder="Room ID" id="room">
+        </div>
+        <div class="col-5" id="startContainer">
+          <button type="button" class="btn btn-secondary" id="joinButton">Join Room</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col instruction">
+          Or start a new one!
+        </div>
+      </div> -->
+      <div class="row">
+        <div class="col center">
+          <button type="button" class="btn btn-success" id="startButton">Join Session</button>
+        </div>
+      </div>
+    </div>
+    <div class="session-container" id="existingSession" style="display: none">
+      <div class="row">
+        <div class="col instruction">
+          You have already joined a session
+        </div>
+      </div>
+      <div class="row">
+        <div class="col center">
+          <button type="button" class="btn btn-secondary" id="exitButton">Exit Session</button>
+        </div>
       </div>
     </div>
 

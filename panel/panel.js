@@ -25,10 +25,10 @@ function onConnectListener(port) {
     console.log("message in panel", msg);
     switch (msg.cmd) {
       case "init":
-        initSockets(msg.payload.name, msg.payload.score);
+        initSockets(msg.payload.name, msg.payload.score, msg.payload.roomId);
         break;
       case "set_score":
-        socket.send(createSocketMessage("set_score", { id: currentPlayer.id, totalScore: msg.payload.totalScore }));
+        socket.send(createSocketMessage("set_score", { id: currentPlayer.id, totalScore: msg.payload.totalScore, roomId: currentPlayer.roomId }));
         break;
       case "hide_start":
         startButton.style.display = "none";
@@ -70,9 +70,9 @@ function buildPlayerList() {
 
 // Messages from backend sockets
 // Parameters: name - new player name, score - new player score
-function initSockets(name, score) {
+function initSockets(name, score, roomId) {
   socket = io("ws://localhost:3000");
-  socket.send(createSocketMessage("add_player", { name, score }))
+  socket.send(createSocketMessage("add_player", { name, score, roomId }))
   socket.on("message", data => {
     const msg = JSON.parse(data);
     console.log("received from socket:", msg);

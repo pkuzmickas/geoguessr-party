@@ -16,9 +16,10 @@ let panelConn;
 let previousStartButton = {};
 
 let startButton;
+let nextRoundButton;
 
 // Text to show the players when their start button is disabled
-let disabledButtonText = "NESPAUSK BLET :)";
+let disabledButtonText = "Waiting for host to start...";
 
 // Observes the game state, checks when the result screen is up
 let stateObserver;
@@ -99,26 +100,35 @@ function listenToMessages() {
             switch (msg.cmd) {
                 case "open_panel":
                     initPanel();
+                    // Initiating panel.js etc
                     setTimeout(() => {
                         openPanel();
                         disableStart();
-                        msgPanel("init", { name: msg.payload.name, score: 0 });
+                        // Getting roomId
+                        const urlSplit = document.location.href.split("/");
+                        const roomId = urlSplit[urlSplit.length - 1];
+                        msgPanel("init", { name: msg.payload.name, score: 0, roomId });
                     }, 1000);
                     break;
                 case "close_panel":
                     msgPanel("close");
                     enableStart();
                     closePanel();
-                    stateObserver.disconnect();
+                    if (stateObserver) {
+                        stateObserver.disconnect();
+                    }
                     break;
                 case "is_panel_open":
                     port.postMessage({ cmd: "is_panel_open", payload: !!document.getElementById("ggPartyPanel") });
                     break;
                 case "start_game":
-                    startGame();
+                    msgPanel("hide_start");
+                    startTimer(startButton, startGame);
                     break;
                 case "continue_game":
-                    continueGame();
+                    msgPanel("hide_continue");
+                    nextRoundButton = document.querySelector("[data-qa='close-round-result']");
+                    startTimer(nextRoundButton, continueGame);
                     break;
                 default:
                     console.warn("unrecognised msg command:", msg);
@@ -135,18 +145,13 @@ function msgPanel(cmd, payload) {
 }
 
 function continueGame() {
-    const nextRoundButton = document.querySelector("[data-qa='close-round-result']");
-    if (nextRoundButton) {
-        nextRoundButton.removeAttribute("disabled");
-        nextRoundButton.click();
-    }
-    msgPanel("hide_continue");
+    nextRoundButton.removeAttribute("disabled");
+    nextRoundButton.click();
 }
 
 function startGame() {
     startButton.removeAttribute("disabled");
     startButton.click();
-    msgPanel("hide_start");
     console.log("resizing the game window in 2 secs...");
     setTimeout(() => {
         console.log("resized the game window");
@@ -161,6 +166,26 @@ function startGame() {
         observeForResults();
     }, 2000);
 }
+
+// Starts the timer on the element in the parameter (button usually)
+// executeAfter - function to execute after timer
+function startTimer(element, executeAfter) {
+    let counter = 3;
+    element.style.fontSize = "36px";
+    element.innerHTML = "GET READY...";
+    const id = setInterval(() => {
+        element.innerHTML = counter;
+        counter--;
+        if (counter == -1) {
+            // element.style.fontSize = "36px";
+            // element.innerHTML = "GO";
+            clearInterval(id);
+            executeAfter();
+            element.style.display = "none";
+        }
+    }, 1000);
+}
+
 
 function observeForResults() {
     console.log("observing for results");
@@ -185,8 +210,11 @@ function observeForResults() {
                     const totalScore =
                         document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
                         ??
-                        document.querySelector(".score-bar__label").childNodes[1].data.toString().replace(",", "")
-                    msgPanel("set_score", { totalScore: totalScore });
+                        document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
+                    // Score changed
+                    if (totalScore) {
+                        msgPanel("set_score", { totalScore: totalScore });
+                    }
                 }
             } else {
                 console.log('something different changed', mutation);
