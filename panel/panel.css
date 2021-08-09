@@ -35,13 +35,7 @@ h1 {
 }
 
 .chat-container {
-    /* position: absolute;  */
-    /* bottom: 0px; */
     width: 100%;
-    /* left: 0px; */
-    /* padding-left: 15px;
-    padding-right: 15px;
-    padding-bottom: 15px; */
     height: 50%;
 }
 

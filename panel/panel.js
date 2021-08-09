@@ -56,16 +56,24 @@ chrome.runtime.onConnect.addListener(onConnectListener);
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
   htmlList.innerHTML = "";
-  for (const player of players) {
+  const orderByPoints = players.sort((a, b) => b.score - a.score);
+  let counter = 1;
+  for (const player of orderByPoints) {
+    // htmlList.innerHTML += `
+    // <div class="row">
+    //   <div class="col">
+    //     ${player.name}
+    //   </div>
+    //   <div class="col">
+    //     ${player.score}
+    //   </div>
+    // </div>`
     htmlList.innerHTML += `
-    <div class="row">
-      <div class="col">
-        ${player.name}
-      </div>
-      <div class="col">
-        ${player.score}
-      </div>
-    </div>`
+    <tr>
+      <th scope="row">${counter++}</th>
+      <td>${player.name}</td>
+      <td>${player.score}</td>
+    </tr>`
   }
 }
 
