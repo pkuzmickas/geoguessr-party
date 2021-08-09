@@ -1,6 +1,7 @@
 // Player object: {name: string, score: string, leader: boolean}
 let players = [];
 const exitButton = document.getElementById("exitGame");
+const startContainer = document.getElementById("startContainer");
 const startButton = document.getElementById("startGame");
 const continueButton = document.getElementById("continueButton");
 // Connection to content script
@@ -129,8 +130,10 @@ function updateCurrentPlayer(player) {
 // Only show start/continue buttons if player is leader
 function showStartButton(btn) {
   if (!currentPlayer.leader) {
+    startContainer.style.display = "none";
     btn.style.display = "none";
   } else {
+    startContainer.style.display = "flex";
     btn.style.display = "unset";
   }
 }

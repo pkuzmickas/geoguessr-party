@@ -24,17 +24,92 @@ h1 {
     text-align: center;
 }
 
-hr {
-    width: 100%;
-    border-top: 1px solid white!important;
-}
-
 .btn {
     width: 130px;
 }
 
-footer {
-    position: fixed;
-    bottom: 20px;
+.control-container {
+    height: 250px;
     width: 100%;
+    border-top: 1px solid #9a9a9a;
+}
+
+.chat-container {
+    /* position: absolute;  */
+    /* bottom: 0px; */
+    width: 100%;
+    /* left: 0px; */
+    /* padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px; */
+    height: 50%;
+}
+
+.chat {
+    height: 100%;
+    background-color: #343a40!important;
+    color: white;
+    border: 1px solid #454d55!important;
+}
+
+.main-container {
+    height: calc(100% - 250px);
+    position: relative;
+}
+
+.control-title {
+    margin: auto;
+}
+
+.control-title > span {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.control-title > img {
+    margin-top: 4px;
+}
+
+.flex {
+    display: flex;
+}
+
+.ma {
+    margin: auto;
+}
+
+.h2 {
+    font-size: 1.5rem!important;
+    vertical-align: text-top!important;
+}
+
+.score-and-chat {
+    height: calc(100% - 73px);
+}
+
+.scoreboard {
+    height: 50%;
+}
+
+table {
+    border-radius: .25rem;
+}
+
+.table thead td, .table thead th {
+    border-top: none!important;
+}
+
+img {
+    height: 3rem;
+}
+
+.table-responsive {
+    height: calc(100% - 5rem);
+}
+
+.chat-row {
+    height: calc(100% - 6rem);
 }

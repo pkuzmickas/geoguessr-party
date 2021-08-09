@@ -8,52 +8,132 @@
 </head>
 
 <body>
-  <div class="container">
-    <div class="row">
-      <div class="col">
-        <h1>GeoGuessr <span class="red">Party</span></h1>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col">
-        <img src="../images/players.svg" height="70px">
-      </div>
-      <div class="col">
-        <img src="../images/scores.svg" height="70px">
-      </div>
-    </div>
-    <div class="row">
-      <div class="col">
-        <h3>Players</h3>
-      </div>
-      <div class="col">
-        <h3>Scores</h3>
-      </div>
-    </div>
-    <div id="playerList">
-    </div>
-    <footer>
-      <div class="row">
-        <hr>
-      </div>
+  <div class="main-container">
+    <div class="container mb-2">
       <div class="row">
         <div class="col">
-          <button type="button" class="btn btn-success" id="startGame">Start Game</button>
+          <h1>GeoGuessr <span class="red">Party</span></h1>
         </div>
       </div>
-      <div class="row">
+      <div class="score-and-chat">
+        <div class="scoreboard">
+          <div class="row control-title-container mb-3">
+            <div class="control-title">
+              <img src="../images/scores.svg">
+              <span class="h2">Scoreboard</span>
+            </div>
+          </div>
+          <div id="playerList" style="display: none;">
+          </div>
+          <div class="table-responsive">
+          <table class="table table-sm table-dark">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Total Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">1</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">2</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">3</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">1</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">2</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">3</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">1</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">2</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+              <tr>
+                <th scope="row">3</th>
+                <td>Domas Ignas Kucaviciai</td>
+                <td>25343</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+        <div class="chat-container mt-2">
+          <div class="row control-title-container mb-3">
+            <div class="control-title">
+              <span class="h2">Chat</span>
+              <img src="../images/chat.svg">
+            </div>
+          </div>
+          <div class="row chat-row">
+            <div class="col">
+              <div class="card chat">
+                <div class="card-body">
+                  This is some text within a card body.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="control-container">
+    <div class="container pt-2">
+      <div class="row control-title-container mb-3">
+        <div class="control-title">
+          <img src="../images/control.svg">
+          <span>Control Panel</span>
+        </div>
+      </div>
+      <div class="row" id="startContainer">
         <div class="col">
-          <button type="button" class="btn btn-success" id="continueButton" style="display: none">Continue</button>
+          Start/Continue the game for the party
+        </div>
+        <div class="col flex">
+          <button type="button" class="btn btn-success ma" id="startGame">Start Game</button>
+          <button type="button" class="btn btn-success ma" id="continueButton" style="display: none">Continue</button>
         </div>
       </div>
-      <div class="row">
-        <div class="col mt-2">
-          <button type="button" class="btn btn-secondary" id="exitGame">Exit Session</button>
+      <div class="row mt-2">
+        <div class="col">
+          Exit the GeoGuessr Party session
+        </div>
+        <div class="col flex">
+          <button type="button" class="btn btn-secondary ma" id="exitGame">Exit Session</button>
         </div>
       </div>
-    </footer>
-    <script src="../scripts/socket.io.js"></script>
-    <script src="panel.js"></script>
+    </div>
+  </div>
+  </div>
+  <script src="../scripts/socket.io.js"></script>
+  <script src="panel.js"></script>
 </body>
 
 </html>
