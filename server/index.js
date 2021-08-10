@@ -3,7 +3,6 @@ const app = express();
 const cors = require('cors')
 app.use(cors())
 const http = require('http');
-const { S_IFREG } = require('constants');
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
@@ -12,7 +11,7 @@ const io = require("socket.io")(server, {
   }
 });
 
-// room: {[roomId: string]: players}
+// room: {[roomId: string]: players, chat[]}
 const rooms = {};
 /*
 player = {
@@ -22,6 +21,11 @@ player = {
   score
   leader
 }
+chat = {
+  author,
+  message,
+  isSystem // whether the message is from the system
+}
 */
 
 app.get('/', (req, res) => {
@@ -29,9 +33,12 @@ app.get('/', (req, res) => {
 });
 
 io.on("connection", socket => {
+  // user Id in the game
   const id = io.engine.generateId();
   // not set yet, will be set on adding player
   let roomId;
+  let currentPlayer;
+
   console.log("user connected");
   // handle the event sent with socket.send()
   socket.on("message", (data) => {
@@ -47,9 +54,18 @@ io.on("connection", socket => {
         io.to(roomId).emit("message", createMessage("continue_game"));
         break;
       case "set_score":
-        console.log(`changing player ${msg.payload.id} score to ${msg.payload.totalScore}`);
-        rooms[msg.payload.roomId][msg.payload.id].score = msg.payload.totalScore;
-        sendUpdatePlayersMessage(msg.payload.roomId);
+        console.log(`changing player ${currentPlayer.name} score to ${msg.payload.totalScore}`);
+        rooms[roomId].players[id].score = msg.payload.totalScore;
+        sendUpdateRoomMessage(roomId);
+        break;
+      case "chat_message":
+        console.log("message received in chat:" + msg.payload.message);
+        const chatMessage = {
+          author: currentPlayer.name,
+          message: msg.payload.message
+        }
+        rooms[roomId].chat.push(chatMessage);
+        sendUpdateRoomMessage(roomId);
         break;
       case "add_player":
         if (!msg.payload.roomId) {
@@ -62,19 +78,26 @@ io.on("connection", socket => {
         socket.join(roomId);
         if (!rooms[roomId]) {
           rooms[roomId] = {};
+          rooms[roomId].players = {};
+          rooms[roomId].chat = [];
         }
-        rooms[roomId][id] = {
+        rooms[roomId].players[id] = {
           id,
           roomId,
           name: msg.payload.name,
           score: msg.payload.score,
           // Leader if room doesnt exist or it's empty
-          leader: Object.keys(rooms[roomId]).length === 0
+          leader: Object.keys(rooms[roomId].players).length === 0
         }
-        console.log("adding player:", rooms[roomId][id]);
-        console.log("current players in room:", rooms[roomId]);
-        socket.emit("message", createMessage("set_current_player", rooms[roomId][id]));
-        sendUpdatePlayersMessage(roomId);
+        currentPlayer = rooms[roomId].players[id];
+        rooms[roomId].chat.push({
+          author: "system",
+          message: msg.payload.name + " joined the game."
+        });
+        console.log("adding player:", rooms[roomId].players[id]);
+        console.log("current state of room:", rooms[roomId]);
+        socket.emit("message", createMessage("set_current_player", currentPlayer));
+        sendUpdateRoomMessage(roomId);
         break;
       default:
         console.log("unrecognized command!");
@@ -86,9 +109,14 @@ io.on("connection", socket => {
   socket.on("disconnect", (reason) => {
     console.log("player disconnected, reason:", reason);
     if (roomId) {
-      delete rooms[roomId][id];
-      if (Object.keys(rooms[roomId]).length > 0) {
-        socket.to(roomId).emit("message", createMessage("update_players", Object.values(rooms[roomId])));
+      const leaveMessage = `${currentPlayer.name} has left the game.`
+      delete rooms[roomId].players[id];
+      if (Object.keys(rooms[roomId].players).length > 0) {
+        rooms[roomId].chat.push({
+          author: "system",
+          message: leaveMessage
+        });
+        socket.to(roomId).emit("message", createMessage("update_room", rooms[roomId]));
       } else {
         delete rooms[roomId];
       }
@@ -105,9 +133,9 @@ server.listen(3000, () => {
   console.log('listening on *:3000');
 });
 
-function sendUpdatePlayersMessage(roomId) {
+function sendUpdateRoomMessage(roomId) {
   if (rooms && rooms[roomId]) {
-    io.to(roomId).emit("message", createMessage("update_players", Object.values(rooms[roomId])));
+    io.to(roomId).emit("message", createMessage("update_room", rooms[roomId]));
   } else {
     console.warn("skipping updating players because room is undefined");
   }

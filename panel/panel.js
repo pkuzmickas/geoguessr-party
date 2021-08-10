@@ -4,12 +4,16 @@ const exitButton = document.getElementById("exitGame");
 const startContainer = document.getElementById("startContainer");
 const startButton = document.getElementById("startGame");
 const continueButton = document.getElementById("continueButton");
+const chatInput = document.getElementById("chatInput");
 // Connection to content script
 let contentConn;
 // Current player of the tab
 let currentPlayer;
 // Socket connection to the server
 let socket;
+
+// Chat in the panel
+let chat = [];
 
 let currentTab;
 
@@ -29,7 +33,7 @@ function onConnectListener(port) {
         initSockets(msg.payload.name, msg.payload.score, msg.payload.roomId);
         break;
       case "set_score":
-        socket.send(createSocketMessage("set_score", { id: currentPlayer.id, totalScore: msg.payload.totalScore, roomId: currentPlayer.roomId }));
+        socket.send(createSocketMessage("set_score", { totalScore: msg.payload.totalScore }));
         break;
       case "hide_start":
         startButton.style.display = "none";
@@ -59,21 +63,33 @@ function buildPlayerList() {
   const orderByPoints = players.sort((a, b) => b.score - a.score);
   let counter = 1;
   for (const player of orderByPoints) {
-    // htmlList.innerHTML += `
-    // <div class="row">
-    //   <div class="col">
-    //     ${player.name}
-    //   </div>
-    //   <div class="col">
-    //     ${player.score}
-    //   </div>
-    // </div>`
     htmlList.innerHTML += `
     <tr>
       <th scope="row">${counter++}</th>
       <td>${player.name}</td>
       <td>${player.score}</td>
     </tr>`
+  }
+}
+
+function buildChat() {
+  const htmlList = document.getElementById("chatHistory");
+  htmlList.innerHTML = "";
+  // reversing to get newest in bottom
+  const chatReversed = chat.reverse();
+  for (const message of chatReversed) {
+    let messageLine = `
+      <b>${message.author}: </b>
+      ${message.message}
+    `;
+    if (message.author === "system") {
+      messageLine = `<i>${messageLine}</i>`
+    }
+    htmlList.innerHTML += `
+      <div class="chat-message">
+        ${messageLine}
+      </div>
+    `
   }
 }
 
@@ -87,9 +103,12 @@ function initSockets(name, score, roomId) {
     console.log("received from socket:", msg);
     // Responding to messages from the server 
     switch (msg.cmd) {
-      case "update_players":
-        players = [...msg.payload];
+      case "update_room":
+        console.log("updating room, payload:", msg.payload);
+        players = Object.values(msg.payload.players);
+        chat = [...msg.payload.chat];
         buildPlayerList();
+        buildChat();
         break;
       case "set_current_player":
         updateCurrentPlayer(msg.payload);
@@ -130,6 +149,16 @@ continueButton.addEventListener("click", async () => {
   socket.send(createSocketMessage("continue_game"))
 });
 
+chatInput.addEventListener("keyup", function (event) {
+  if (event.key === "Enter") {
+    const msg = chatInput.value.trim();
+    if (msg !== "") { 
+      sendChatMessage(chatInput.value); 
+    }
+    chatInput.value = "";
+  }
+});
+
 function updateCurrentPlayer(player) {
   currentPlayer = player;
   showStartButton(startButton);
@@ -144,5 +173,9 @@ function showStartButton(btn) {
     startContainer.style.display = "flex";
     btn.style.display = "unset";
   }
+}
+
+function sendChatMessage(message) {
+  socket.send(createSocketMessage("chat_message", { message }));
 }
 
