@@ -56,6 +56,10 @@ io.on("connection", socket => {
       case "set_score":
         console.log(`changing player ${currentPlayer.name} score to ${msg.payload.totalScore}`);
         rooms[roomId].players[id].score = msg.payload.totalScore;
+        rooms[roomId].chat.push({
+          author: "system",
+          message: currentPlayer.name + " made a guess!"
+        });
         sendUpdateRoomMessage(roomId);
         break;
       case "chat_message":

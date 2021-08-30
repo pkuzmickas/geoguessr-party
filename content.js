@@ -171,9 +171,9 @@ function startGame() {
 function startTimer(element, executeAfter) {
     let counter = 3;
     const label = element.querySelector(".button__label");
-    if(label) {
+    if (label) {
         label.style.fontSize = "36px";
-        label.innerHTML = "GET READY...";    
+        label.innerHTML = "GET READY...";
     }
     timerId = setInterval(() => {
         label.innerHTML = counter;
@@ -271,10 +271,12 @@ function resetGameToNormal() {
     if (results) {
         results.style.width = "100%";
         const continueButton = document.querySelector('[data-qa="close-round-result"]');
-        const continueButtonLabel = continueButton.querySelector(".button__label");
-        continueButtonLabel.innerHTML = "PLAY NEXT ROUND";
-        continueButton.removeAttribute("disabled");
-        continueButton.style.backgroundColor = "var(--color-primary-60)";
+        if (continueButton) {
+            const continueButtonLabel = continueButton.querySelector(".button__label");
+            continueButtonLabel.innerHTML = "PLAY NEXT ROUND";
+            continueButton.removeAttribute("disabled");
+            continueButton.style.backgroundColor = "var(--color-primary-60)";
+        }
     }
     clearInterval(timerId);
 }
