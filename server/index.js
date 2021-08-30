@@ -110,12 +110,22 @@ io.on("connection", socket => {
     console.log("player disconnected, reason:", reason);
     if (roomId) {
       const leaveMessage = `${currentPlayer.name} has left the game.`
+      const wasLeader = currentPlayer.leader;
       delete rooms[roomId].players[id];
       if (Object.keys(rooms[roomId].players).length > 0) {
         rooms[roomId].chat.push({
           author: "system",
           message: leaveMessage
         });
+        if(wasLeader) {
+          // Picking new leader
+          const newLeader = Object.values(rooms[roomId].players)[0];
+          newLeader.leader = true;
+          rooms[roomId].chat.push({
+            author: "system",
+            message: `assigned new leader: ${newLeader.name}`
+          });
+        }
         socket.to(roomId).emit("message", createMessage("update_room", rooms[roomId]));
       } else {
         delete rooms[roomId];

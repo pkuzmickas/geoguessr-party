@@ -139,3 +139,16 @@ img {
 .chat-col {
     height: 100%;
 }
+
+.leader {
+    background: #0080005c;
+}
+
+.winner {
+    background: #bb8400cf;
+}
+
+.leader-winner {
+    box-shadow: inset 0px 0px 0px 2px #bb8400cf;
+    background: #0080005c;
+}

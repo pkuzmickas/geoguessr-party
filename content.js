@@ -24,6 +24,9 @@ let disabledButtonText = "Waiting for host to start...";
 // Observes the game state, checks when the result screen is up
 let stateObserver;
 
+// Start game timer
+let timerId;
+
 main();
 
 // FUNCTIONS
@@ -71,6 +74,7 @@ function closePanel() {
     iframe = undefined;
     nextBody.style.width = "100%";
     header.style.width = "100%";
+    resetGameToNormal();
 }
 
 function disableStart() {
@@ -87,7 +91,10 @@ function disableStart() {
 function enableStart() {
     startButton.removeAttribute("disabled");
     startButton.style.backgroundColor = previousStartButton.style.backgroundColor;
-    startButton.querySelector(".button__label").innerHTML = previousStartButton.querySelector(".button__label").innerHTML;
+    const label = startButton.querySelector(".button__label");
+    const previousLabel = previousStartButton.querySelector(".button__label")
+    label.innerHTML = previousLabel.innerHTML;
+    label.style = previousLabel.style;
 }
 
 // Listening to messages to content
@@ -122,11 +129,9 @@ function listenToMessages() {
                     port.postMessage({ cmd: "is_panel_open", payload: !!document.getElementById("ggPartyPanel") });
                     break;
                 case "start_game":
-                    msgPanel("hide_start");
                     startTimer(startButton, startGame);
                     break;
                 case "continue_game":
-                    msgPanel("hide_continue");
                     nextRoundButton = document.querySelector("[data-qa='close-round-result']");
                     startTimer(nextRoundButton, continueGame);
                     break;
@@ -152,17 +157,11 @@ function continueGame() {
 function startGame() {
     startButton.removeAttribute("disabled");
     startButton.click();
+    msgPanel("set_game_stage", "in-game");
     console.log("resizing the game window in 2 secs...");
     setTimeout(() => {
         console.log("resized the game window");
-        const gameLayout = document.querySelector(".game-layout");
-        if (gameLayout) gameLayout.style.width = "calc(100% - 400px)";
-        const gameCanvas = document.querySelector("canvas");
-        if (gameCanvas) gameCanvas.style.width = "100%";
-        const arrowsContainer = document.querySelector(".gmnoprint");
-        if (arrowsContainer) arrowsContainer.style.width = "100%";
-        const arrows = arrowsContainer?.firstChild;
-        if (arrows) arrows.style.width = "100%";
+        reduceGameSize();
         observeForResults();
     }, 2000);
 }
@@ -171,22 +170,23 @@ function startGame() {
 // executeAfter - function to execute after timer
 function startTimer(element, executeAfter) {
     let counter = 3;
-    element.style.fontSize = "36px";
-    element.innerHTML = "GET READY...";
-    const id = setInterval(() => {
-        element.innerHTML = counter;
+    const label = element.querySelector(".button__label");
+    if(label) {
+        label.style.fontSize = "36px";
+        label.innerHTML = "GET READY...";    
+    }
+    timerId = setInterval(() => {
+        label.innerHTML = counter;
         counter--;
         if (counter == -1) {
-            // element.style.fontSize = "36px";
-            // element.innerHTML = "GO";
-            clearInterval(id);
+            clearInterval(timerId);
             executeAfter();
             element.style.display = "none";
         }
     }, 1000);
 }
 
-
+// Waiting for the game to enter results stage
 function observeForResults() {
     console.log("observing for results");
     // Select the node that will be observed for mutations
@@ -202,8 +202,7 @@ function observeForResults() {
                 const result = document.querySelector('.result');
                 // Reached the result screen
                 if (result) {
-                    msgPanel("hide_start");
-                    msgPanel("show_continue");
+                    msgPanel("set_game_stage", "results");
                     disableContinue();
                     result.style.width = "calc(100% - 400px)";
                     console.log("changed result size: ", result);
@@ -242,4 +241,40 @@ function disableContinue() {
             }, 500);
         }
     }
+}
+
+function reduceGameSize() {
+    const gameLayout = document.querySelector(".game-layout");
+    if (gameLayout) gameLayout.style.width = "calc(100% - 400px)";
+    const gameCanvas = document.querySelector("canvas");
+    if (gameCanvas) {
+        gameCanvas.style.width = "100%";
+        const canvasWidth = gameCanvas.clientWidth;
+        gameCanvas.setAttribute("width", canvasWidth);
+    }
+    const arrowsContainer = document.querySelector(".gmnoprint");
+    if (arrowsContainer) arrowsContainer.style.width = "100%";
+    const arrows = arrowsContainer?.firstChild;
+    if (arrows) arrows.style.width = "100%";
+}
+
+function resetGameToNormal() {
+    const gameLayout = document.querySelector(".game-layout");
+    if (gameLayout) gameLayout.style.width = "100%";
+    const gameCanvas = document.querySelector("canvas");
+    if (gameCanvas) {
+        gameCanvas.style.width = "100%";
+        const canvasWidth = gameCanvas.clientWidth;
+        gameCanvas.setAttribute("width", canvasWidth);
+    }
+    const results = document.querySelector(".result");
+    if (results) {
+        results.style.width = "100%";
+        const continueButton = document.querySelector('[data-qa="close-round-result"]');
+        const continueButtonLabel = continueButton.querySelector(".button__label");
+        continueButtonLabel.innerHTML = "PLAY NEXT ROUND";
+        continueButton.removeAttribute("disabled");
+        continueButton.style.backgroundColor = "var(--color-primary-60)";
+    }
+    clearInterval(timerId);
 }
