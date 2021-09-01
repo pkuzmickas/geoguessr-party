@@ -39,11 +39,7 @@ function onConnectListener(port) {
         socket.send(createSocketMessage("set_score", { totalScore: msg.payload.totalScore }));
         break;
       case "set_game_stage":
-        if(gameStage === "pre-game") {
-          startButton.style.display = "none";
-        }
-        gameStage = msg.payload;
-        updateControlPanel();
+        updateGameStage(msg.payload);
         break;
       case "close":
         console.log("closed the socket connection");
@@ -69,11 +65,11 @@ function buildPlayerList() {
       <td>${player.name}</td>
       <td>${player.score}</td>
     `;
-    if(player.leader && counter === 1 && player.score !== 0) {
+    if (player.leader && counter === 1 && player.score !== 0) {
       playerRow = `<tr class="leader-winner">${playerRow}</tr>`
-    } else if(player.leader) {
+    } else if (player.leader) {
       playerRow = `<tr class="leader">${playerRow}</tr>`
-    } else if(counter === 1 && player.score !== 0) {
+    } else if (counter === 1 && player.score !== 0) {
       playerRow = `<tr class="winner">${playerRow}</tr>`
     }
 
@@ -118,7 +114,7 @@ function initSockets(name, score, roomId) {
         players = Object.values(msg.payload.players);
         chat = [...msg.payload.chat];
         // Mostly for leader election
-        const currentPlayerUpdated = players.find((player)=>player.id === currentPlayer.id);
+        const currentPlayerUpdated = players.find((player) => player.id === currentPlayer.id);
         updateCurrentPlayer(currentPlayerUpdated);
         buildPlayerList();
         buildChat();
@@ -167,8 +163,8 @@ continueButton.addEventListener("click", async () => {
 chatInput.addEventListener("keyup", function (event) {
   if (event.key === "Enter") {
     const msg = chatInput.value.trim();
-    if (msg !== "") { 
-      sendChatMessage(chatInput.value); 
+    if (msg !== "") {
+      sendChatMessage(chatInput.value);
     }
     chatInput.value = "";
   }
@@ -176,11 +172,15 @@ chatInput.addEventListener("keyup", function (event) {
 
 function updateCurrentPlayer(player) {
   currentPlayer = player;
-  updateControlPanel();
+  updateGameStage();
 }
 
-// Only show start/continue buttons if player is leader
-function updateControlPanel() {
+// Makes changes to the panel/game according to the stage
+function updateGameStage(newStage = gameStage) {
+  if (gameStage === "pre-game") {
+    startButton.style.display = "none";
+  }
+  gameStage = newStage;
   let btn;
   console.log("updating control panel, stage:", gameStage);
   switch (gameStage) {
@@ -192,13 +192,20 @@ function updateControlPanel() {
     case "results":
       btn = continueButton;
       break;
+    case "ads":
+      socket.send(createSocketMessage("ads_message"));
+      break;
   }
   if (!currentPlayer.leader) {
     startContainer.style.display = "none";
-    btn.style.display = "none";
+    if (btn) {
+      btn.style.display = "none";
+    }
   } else {
     startContainer.style.display = "flex";
-    btn.style.display = "unset";
+    if (btn) {
+      btn.style.display = "unset";
+    }
   }
 }
 

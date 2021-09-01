@@ -71,6 +71,12 @@ io.on("connection", socket => {
         rooms[roomId].chat.push(chatMessage);
         sendUpdateRoomMessage(roomId);
         break;
+      case "ads_message":
+        rooms[roomId].chat.push({
+          author: "system",
+          message: currentPlayer.name + " is watching ads!"
+        });
+        sendUpdateRoomMessage(roomId);
       case "add_player":
         if (!msg.payload.roomId) {
           console.error("roomId not specified when joining the room by:", msg.payload.name);

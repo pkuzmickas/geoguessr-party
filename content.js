@@ -202,17 +202,17 @@ function observeForResults() {
                 const result = document.querySelector('.result');
                 // Reached the result screen
                 if (result) {
-                    msgPanel("set_game_stage", "results");
-                    disableContinue();
-                    result.style.width = "calc(100% - 400px)";
-                    console.log("changed result size: ", result);
-                    const totalScore =
-                        document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
-                        ??
-                        document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
-                    // Score changed
-                    if (totalScore) {
-                        msgPanel("set_score", { totalScore: totalScore });
+                    // Check if it's the ad page
+                    const ad = result.querySelector('.interstitial-message');
+                    if (ad) {
+                        msgPanel("set_game_stage", "ads");
+                        const continueBtn = ad.querySelector("[data-qa='interstitial-message-continue-to-game']");
+                        continueBtn.addEventListener('click', () => {
+                            console.log("continue clicked!");
+                            handleResultsScreen(result);
+                        });
+                    } else {
+                        handleResultsScreen(result);
                     }
                 }
             } else {
@@ -227,6 +227,22 @@ function observeForResults() {
     // Start observing the target node for configured mutations
     stateObserver.observe(targetNode, config);
 
+}
+
+function handleResultsScreen(result) {
+    console.log("results stage")
+    msgPanel("set_game_stage", "results");
+    disableContinue();
+    result.style.width = "calc(100% - 400px)";
+    console.log("changed result size: ", result);
+    const totalScore =
+        document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
+        ??
+        document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
+    // Score changed
+    if (totalScore) {
+        msgPanel("set_score", { totalScore: totalScore });
+    }
 }
 
 function disableContinue() {
