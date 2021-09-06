@@ -11,7 +11,7 @@ const io = require("socket.io")(server, {
   }
 });
 
-// room: {[roomId: string]: players, chat[]}
+// rooms: {[roomId: string]: {players:{}, chat: {}, started: boolean}
 const rooms = {};
 /*
 player = {
@@ -20,6 +20,7 @@ player = {
   name
   score
   leader
+  guessed
 }
 chat = {
   author,
@@ -30,6 +31,12 @@ chat = {
 
 app.get('/', (req, res) => {
   res.send('<h1>GeoGuessr Party Server Running</h1>');
+});
+
+// GET with param room=roomid
+app.get('/isingame', (req, res) => {
+  let roomId = req.query.room;
+  res.send(rooms[roomId] ? rooms[roomId].started : false);
 });
 
 io.on("connection", socket => {
@@ -47,15 +54,23 @@ io.on("connection", socket => {
     switch (msg.cmd) {
       case "start_game":
         console.log("received message to start game, starting...");
+        rooms[roomId].started = true;
         io.to(roomId).emit("message", createMessage("start_game"));
         break;
       case "continue_game":
         console.log("received message to continue game, continuing...");
         io.to(roomId).emit("message", createMessage("continue_game"));
+        for (const player of Object.values(rooms[roomId].players)) {
+          player.guessed = false;
+        }
+        sendUpdateRoomMessage(roomId);
         break;
       case "set_score":
         console.log(`changing player ${currentPlayer.name} score to ${msg.payload.totalScore}`);
-        rooms[roomId].players[id].score = msg.payload.totalScore;
+        if (msg.payload.totalScore) {
+          rooms[roomId].players[id].score = msg.payload.totalScore;
+        }
+        rooms[roomId].players[id].guessed = true;
         rooms[roomId].chat.push({
           author: "system",
           message: currentPlayer.name + " made a guess!"
@@ -77,6 +92,7 @@ io.on("connection", socket => {
           message: currentPlayer.name + " is watching ads!"
         });
         sendUpdateRoomMessage(roomId);
+        break;
       case "add_player":
         if (!msg.payload.roomId) {
           console.error("roomId not specified when joining the room by:", msg.payload.name);
@@ -127,7 +143,7 @@ io.on("connection", socket => {
           author: "system",
           message: leaveMessage
         });
-        if(wasLeader) {
+        if (wasLeader) {
           // Picking new leader
           const newLeader = Object.values(rooms[roomId].players)[0];
           newLeader.leader = true;

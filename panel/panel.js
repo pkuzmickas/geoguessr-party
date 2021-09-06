@@ -5,6 +5,7 @@ const startContainer = document.getElementById("startContainer");
 const startButton = document.getElementById("startGame");
 const continueButton = document.getElementById("continueButton");
 const chatInput = document.getElementById("chatInput");
+const waitingButton = document.getElementById("waitingButton");
 // Connection to content script
 let contentConn;
 // Current player of the tab
@@ -40,6 +41,7 @@ function onConnectListener(port) {
         break;
       case "set_game_stage":
         updateGameStage(msg.payload);
+        updateControlPanel();
         break;
       case "close":
         console.log("closed the socket connection");
@@ -53,6 +55,14 @@ function onConnectListener(port) {
 // Messages from chrome content/background scripts
 chrome.runtime.onConnect.addListener(onConnectListener);
 
+function checkMark() {
+  return `<div class="checkmark">
+  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-check" viewBox="-3 1 16 16" font-weight="bold">
+    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+  </svg></div>
+  `;
+}
+
 // Building the HTML for player list
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
@@ -62,7 +72,7 @@ function buildPlayerList() {
   for (const player of orderByPoints) {
     let playerRow = `
       <th scope="row">${counter}</th>
-      <td>${player.name}</td>
+      <td>${player.name}${player.guessed ? checkMark() : ''}</td>
       <td>${player.score}</td>
     `;
     if (player.leader && counter === 1 && player.score !== 0) {
@@ -126,6 +136,7 @@ function initSockets(name, score, roomId) {
         msgContent("start_game");
         break;
       case "continue_game":
+        updateGameStage("in-game");
         msgContent("continue_game");
         break;
       default:
@@ -153,6 +164,7 @@ exitButton.addEventListener("click", async () => {
 startButton.addEventListener("click", async () => {
   socket.send(createSocketMessage("start_game"))
   startContainer.style.display = "none";
+  startButton.style.display = "none";
 });
 
 continueButton.addEventListener("click", async () => {
@@ -172,15 +184,20 @@ chatInput.addEventListener("keyup", function (event) {
 
 function updateCurrentPlayer(player) {
   currentPlayer = player;
-  updateGameStage();
+  updateControlPanel();
+}
+
+function updateGameStage(newStage) {
+  gameStage = newStage;
+  switch (gameStage) {
+    case "ads":
+      socket.send(createSocketMessage("ads_message"));
+      break;
+  }
 }
 
 // Makes changes to the panel/game according to the stage
-function updateGameStage(newStage = gameStage) {
-  if (gameStage === "pre-game") {
-    startButton.style.display = "none";
-  }
-  gameStage = newStage;
+function updateControlPanel() {
   let btn;
   console.log("updating control panel, stage:", gameStage);
   switch (gameStage) {
@@ -190,10 +207,13 @@ function updateGameStage(newStage = gameStage) {
     case "in-game":
       return;
     case "results":
-      btn = continueButton;
-      break;
-    case "ads":
-      socket.send(createSocketMessage("ads_message"));
+      if (players.every((player) => player.guessed)) {
+        waitingButton.style.display = "none";
+        btn = continueButton;
+      } else {
+        continueButton.style.display = "none";
+        btn = waitingButton;
+      }
       break;
   }
   if (!currentPlayer.leader) {
@@ -201,7 +221,7 @@ function updateGameStage(newStage = gameStage) {
     if (btn) {
       btn.style.display = "none";
     }
-  } else {
+  } else if(gameStage !== "ads") {
     startContainer.style.display = "flex";
     if (btn) {
       btn.style.display = "unset";
@@ -212,3 +232,5 @@ function updateGameStage(newStage = gameStage) {
 function sendChatMessage(message) {
   socket.send(createSocketMessage("chat_message", { message }));
 }
+
+//interstitial-message-continue-to-game

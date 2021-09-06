@@ -18,7 +18,7 @@
       </div>
       <div class="row">
         <div class="col">
-          <input class="form-control" type="text" placeholder="Name" id="name">
+          <input class="form-control" type="text" placeholder="Name" id="name" maxlength="30">
         </div>
       </div>
       <div class="row">
@@ -26,19 +26,6 @@
           And join the party!
         </div>
       </div>
-      <!-- <div class="row">
-        <div class="col-7 pr-0">
-          <input class="form-control" type="text" placeholder="Room ID" id="room">
-        </div>
-        <div class="col-5" id="startContainer">
-          <button type="button" class="btn btn-secondary" id="joinButton">Join Room</button>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col instruction">
-          Or start a new one!
-        </div>
-      </div> -->
       <div class="row">
         <div class="col center">
           <button type="button" class="btn btn-success" id="startButton">Join Session</button>
@@ -54,6 +41,23 @@
       <div class="row">
         <div class="col center">
           <button type="button" class="btn btn-secondary" id="exitButton">Exit Session</button>
+        </div>
+      </div>
+    </div>
+    <div class="session-container" id="sessionStarted" style="display: none">
+      <div class="row">
+        <div class="col instruction">
+          This room is already in game. You can only join a room which has not started the game yet.
+        </div>
+      </div>
+    </div>
+    <div class="session-container" id="badURL" style="display: none">
+      <div class="row">
+        <div class="col instruction">
+          To use this extension, please join a challenge link
+          <br /><span class="url">(https://www.geoguessr.com/challenge/ROOM_ID)</span>
+          <br />
+          and open the extension again.
         </div>
       </div>
     </div>

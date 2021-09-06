@@ -27,4 +27,11 @@ h2 {
     color: white;
     margin-top: 5px;
     margin-bottom: 3px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.url {
+    font-weight: 400;
+    color: #ff0101;
 }

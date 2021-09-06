@@ -158,12 +158,12 @@ function startGame() {
     startButton.removeAttribute("disabled");
     startButton.click();
     msgPanel("set_game_stage", "in-game");
-    console.log("resizing the game window in 2 secs...");
+    console.log("resizing the game window in 1 secs...");
     setTimeout(() => {
         console.log("resized the game window");
         reduceGameSize();
         observeForResults();
-    }, 2000);
+    }, 1000);
 }
 
 // Starts the timer on the element in the parameter (button usually)
@@ -208,7 +208,6 @@ function observeForResults() {
                         msgPanel("set_game_stage", "ads");
                         const continueBtn = ad.querySelector("[data-qa='interstitial-message-continue-to-game']");
                         continueBtn.addEventListener('click', () => {
-                            console.log("continue clicked!");
                             handleResultsScreen(result);
                         });
                     } else {
@@ -239,10 +238,7 @@ function handleResultsScreen(result) {
         document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
         ??
         document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
-    // Score changed
-    if (totalScore) {
-        msgPanel("set_score", { totalScore: totalScore });
-    }
+    msgPanel("set_score", { totalScore: totalScore });
 }
 
 function disableContinue() {
@@ -272,6 +268,7 @@ function reduceGameSize() {
     if (arrowsContainer) arrowsContainer.style.width = "100%";
     const arrows = arrowsContainer?.firstChild;
     if (arrows) arrows.style.width = "100%";
+    window.dispatchEvent(new Event("resize"))
 }
 
 function resetGameToNormal() {

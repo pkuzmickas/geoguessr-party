@@ -29,7 +29,7 @@
                 <tr>
                   <th scope="col">#</th>
                   <th scope="col">Name</th>
-                  <th scope="col">Total Score</th>
+                  <th scope="col">Score</th>
                 </tr>
               </thead>
               <tbody id="playerList">
@@ -70,19 +70,20 @@
           <span>Control Panel</span>
         </div>
       </div>
-      <div class="row" id="startContainer">
-        <div class="col">
+      <div class="row no-gutters">
+        <!-- <div class="col">
           Start/Continue the game for the party
-        </div>
-        <div class="col flex">
+        </div> -->
+        <div class="col flex" id="startContainer">
           <button type="button" class="btn btn-success ma" id="startGame">Start Game</button>
           <button type="button" class="btn btn-success ma" id="continueButton" style="display: none">Continue</button>
+          <button type="button" class="btn btn-disabled ma" id="waitingButton" style="display: none">Wait for everyone</button>
         </div>
-      </div>
-      <div class="row mt-2">
-        <div class="col">
+      <!-- </div> -->
+      <!-- <div class="row mt-2"> -->
+        <!-- <div class="col">
           Exit the GeoGuessr Party session
-        </div>
+        </div> -->
         <div class="col flex">
           <button type="button" class="btn btn-secondary ma" id="exitGame">Exit Session</button>
         </div>
