@@ -5,6 +5,7 @@ const startContainer = document.getElementById("startContainer");
 const startButton = document.getElementById("startGame");
 const continueButton = document.getElementById("continueButton");
 const chatInput = document.getElementById("chatInput");
+const revealButton = document.getElementById("revealButton");
 const waitingButton = document.getElementById("waitingButton");
 // Connection to content script
 let contentConn;
@@ -20,6 +21,8 @@ let gameStage = "pre-game";
 let chat = [];
 
 let currentTab;
+
+const scoreHiddenText = "HIDDEN";
 
 chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
   currentTab = tabs[0];
@@ -47,6 +50,10 @@ function onConnectListener(port) {
         console.log("closed the socket connection");
         socket.close();
         break;
+      case "hide_scores":
+        updateGameStage("final-results");
+        socket.send(createSocketMessage("set_score", { totalScore: "HIDDEN" }));
+        break;
     }
     console.log("received at panel", msg);
   });
@@ -67,22 +74,40 @@ function checkMark() {
 function buildPlayerList() {
   const htmlList = document.getElementById("playerList");
   htmlList.innerHTML = "";
-  const orderByPoints = players.sort((a, b) => b.score - a.score);
+  // Checks whether it's the final round (if someone has guessed and has HIDDEN in scores)
+  let finals = false;
+  for (const player of players) {
+    if (player.score === scoreHiddenText) {
+      finals = true;
+      break;
+    }
+  }
+  // If not last round - sort players, else don't
+  const orderByPoints = !finals ? players.sort((a, b) => b.score - a.score) : players;
+
   let counter = 1;
   for (const player of orderByPoints) {
-    let playerRow = `
+    let playerRow;
+    if (finals) {
+      playerRow = `
+      <th scope="row"> </th>
+      <td>${player.name}${player.guessed ? checkMark() : ''}</td>
+      <td>${player.score}</td>
+    `;
+    } else {
+      playerRow = `
       <th scope="row">${counter}</th>
       <td>${player.name}${player.guessed ? checkMark() : ''}</td>
       <td>${player.score}</td>
     `;
-    if (player.leader && counter === 1 && player.score !== 0) {
-      playerRow = `<tr class="leader-winner">${playerRow}</tr>`
-    } else if (player.leader) {
-      playerRow = `<tr class="leader">${playerRow}</tr>`
-    } else if (counter === 1 && player.score !== 0) {
-      playerRow = `<tr class="winner">${playerRow}</tr>`
+      if (player.leader && counter === 1 && player.score !== 0) {
+        playerRow = `<tr class="leader-winner">${playerRow}</tr>`
+      } else if (player.leader) {
+        playerRow = `<tr class="leader">${playerRow}</tr>`
+      } else if (counter === 1 && player.score !== 0) {
+        playerRow = `<tr class="winner">${playerRow}</tr>`
+      }
     }
-
     htmlList.innerHTML += playerRow;
     counter++;
   }
@@ -172,6 +197,11 @@ continueButton.addEventListener("click", async () => {
   startContainer.style.display = "none";
 });
 
+revealButton.addEventListener("click", async () => {
+  socket.send(createSocketMessage("continue_game"))
+  startContainer.style.display = "none";
+});
+
 chatInput.addEventListener("keyup", function (event) {
   if (event.key === "Enter") {
     const msg = chatInput.value.trim();
@@ -215,13 +245,22 @@ function updateControlPanel() {
         btn = waitingButton;
       }
       break;
+    case "final-results":
+      if (players.every((player) => player.guessed)) {
+        waitingButton.style.display = "none";
+        btn = revealButton;
+      } else {
+        continueButton.style.display = "none";
+        btn = waitingButton;
+      }
+      break;
   }
   if (!currentPlayer.leader) {
     startContainer.style.display = "none";
     if (btn) {
       btn.style.display = "none";
     }
-  } else if(gameStage !== "ads") {
+  } else if (gameStage !== "ads") {
     startContainer.style.display = "flex";
     if (btn) {
       btn.style.display = "unset";

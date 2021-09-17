@@ -1,5 +1,7 @@
 :root {
     --control-panel-size: 180px;
+    --leader-color: #a71e305c;
+    --winner-color: #bb8400cf;
 }
 
 html,
@@ -147,16 +149,16 @@ img {
 }
 
 .leader {
-    background: #a71e305c;
+    background: var(--leader-color);
 }
 
 .winner {
-    background: #bb8400cf;
+    background: var(--winner-color);
 }
 
 .leader-winner {
-    box-shadow: inset 0px 0px 0px 2px #bb8400cf;
-    background: #a71e305c;
+    box-shadow: inset 0px 0px 0px 2px var(--winner-color);
+    background: var(--leader-color);
 }
 
 .checkmark {
@@ -168,4 +170,26 @@ img {
 #waitingButton {
     background: #b14747;
     color: white;
+}
+
+.legend {
+    display: flex;
+    justify-content: space-around;
+}
+
+.legend-rect {
+    width: 40px;
+    height: 25px;
+    border-radius: 5px;
+}
+
+.winner-legend {
+    background-color: var(--winner-color);
+}
+.host-legend {
+    background-color: var(--leader-color);
+}
+.legend-container {
+    display: flex;
+    gap: 10px;
 }

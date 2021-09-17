@@ -10,6 +10,7 @@ const io = require("socket.io")(server, {
     methods: ["GET", "POST"]
   }
 });
+const finalRoundText = "HIDDEN";
 
 // rooms: {[roomId: string]: {players:{}, chat: {}, started: boolean}
 const rooms = {};
@@ -75,6 +76,31 @@ io.on("connection", socket => {
           author: "system",
           message: currentPlayer.name + " made a guess!"
         });
+        if (msg.payload.totalScore === finalRoundText) {
+          rooms[roomId].chat.push({
+            author: "system",
+            message: "Hiding score, last round."
+          });
+        }
+        let allGuessed = true;
+        for (const player of Object.values(rooms[roomId].players)) {
+          if (!player.guessed) {
+            allGuessed = false;
+            break;
+          }
+        }
+        if (allGuessed) {
+          let chatMsg;
+          if (msg.payload.totalScore === finalRoundText) {
+            chatMsg = "Waiting for host to reveal final scores.";
+          } else {
+            chatMsg = "Waiting for host to start new round.";
+          }
+          rooms[roomId].chat.push({
+            author: "system",
+            message: chatMsg
+          });
+        }
         sendUpdateRoomMessage(roomId);
         break;
       case "chat_message":

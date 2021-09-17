@@ -33,13 +33,18 @@
                 </tr>
               </thead>
               <tbody id="playerList">
-                <!-- <tr>
-                <th scope="row">1</th>
-                <td>Domas Ignas Kucaviciai</td>
-                <td>25343</td>
-              </tr> -->
               </tbody>
             </table>
+            <div class="legend">
+              <div class="legend-container">
+                <div class="winner-legend legend-rect"></div>
+                leader
+              </div>
+              <div class="legend-container">
+                <div class="host-legend legend-rect"></div>
+                host
+              </div>
+            </div>
           </div>
         </div>
         <div class="chat-container mt-2">
@@ -71,19 +76,14 @@
         </div>
       </div>
       <div class="row no-gutters">
-        <!-- <div class="col">
-          Start/Continue the game for the party
-        </div> -->
         <div class="col flex" id="startContainer">
           <button type="button" class="btn btn-success ma" id="startGame">Start Game</button>
           <button type="button" class="btn btn-success ma" id="continueButton" style="display: none">Continue</button>
-          <button type="button" class="btn btn-disabled ma" id="waitingButton" style="display: none">Wait for everyone</button>
+          <button type="button" class="btn btn-success ma" id="revealButton" style="display: none">Reveal Final
+            Scores</button>
+          <button type="button" class="btn btn-disabled ma" id="waitingButton" style="display: none">Wait for
+            everyone</button>
         </div>
-      <!-- </div> -->
-      <!-- <div class="row mt-2"> -->
-        <!-- <div class="col">
-          Exit the GeoGuessr Party session
-        </div> -->
         <div class="col flex">
           <button type="button" class="btn btn-secondary ma" id="exitGame">Exit Session</button>
         </div>

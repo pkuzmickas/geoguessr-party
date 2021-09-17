@@ -19,13 +19,16 @@ let startButton;
 let nextRoundButton;
 
 // Text to show the players when their start button is disabled
-let disabledButtonText = "Waiting for host to start...";
-
+const disabledButtonText = "Waiting for host to start...";
+const lastResultIndicator = "VIEW SUMMARY";
+const lastResultButtonText = "Waitig for host to reveal final scores...";
 // Observes the game state, checks when the result screen is up
 let stateObserver;
 
 // Start game timer
 let timerId;
+
+let extensionClosed = false;
 
 main();
 
@@ -142,6 +145,28 @@ function listenToMessages() {
             return true
         });
     });
+
+    // Listen to background message about URL
+    chrome.runtime.onMessage.addListener(
+        function (request) {
+            if (request.message === 'url_change') {
+                if (!extensionClosed) {
+                    if (!validChallengerOrResultURL(request.url)) {
+                        msgPanel("close");
+                        closePanel();
+                        extensionClosed = true;
+                    }
+                }
+            }
+        }
+    );
+
+}
+
+function validChallengerOrResultURL(str) {
+    const patternChallenge = new RegExp('^(https?:\/\/)?(www\.)?geoguessr\.com\/challenge\/[a-zA-Z0-9]+$');
+    const patternResult = new RegExp('^(https?:\/\/)?(www\.)?geoguessr\.com\/results\/[a-zA-Z0-9]+$');
+    return !!patternChallenge.test(str) || !!patternResult.test(str);
 }
 
 function msgPanel(cmd, payload) {
@@ -231,18 +256,23 @@ function observeForResults() {
 function handleResultsScreen(result) {
     console.log("results stage")
     msgPanel("set_game_stage", "results");
-    disableContinue();
+    const nextRoundButton = document.querySelector("[data-qa='close-round-result']");
+    // Last results page before scores
+    if (nextRoundButton && nextRoundButton.innerText === lastResultIndicator) {
+        msgPanel("hide_scores");
+    } else {
+        // Update the score if not final results
+        const totalScore =
+            document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
+            ??
+            document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
+        msgPanel("set_score", { totalScore });
+    }
+    disableContinue(nextRoundButton);
     result.style.width = "calc(100% - 400px)";
-    console.log("changed result size: ", result);
-    const totalScore =
-        document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
-        ??
-        document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
-    msgPanel("set_score", { totalScore: totalScore });
 }
 
-function disableContinue() {
-    const nextRoundButton = document.querySelector("[data-qa='close-round-result']");
+function disableContinue(nextRoundButton) {
     if (nextRoundButton) {
         nextRoundButton.setAttribute("disabled", true);
         nextRoundButton.style.backgroundColor = "black";
@@ -250,6 +280,9 @@ function disableContinue() {
         if (btnText) {
             setTimeout(() => {
                 btnText.innerHTML = disabledButtonText;
+                if (nextRoundButton.innerText === lastResultIndicator) {
+                    btnText.innerHTML = lastResultButtonText;
+                }
             }, 500);
         }
     }
