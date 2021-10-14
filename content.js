@@ -63,6 +63,7 @@ function openPanel() {
     iframe.style.width = panel.size;
     iframe.style.display = "block";
     nextBody.style.width = "calc(100% - 400px)";
+    if(header)
     header.style.width = "calc(100% - 400px)";
     connectToPanel();
 }
@@ -88,7 +89,7 @@ function disableStart() {
     previousStartButton = startButton.cloneNode(true);
     startButton.setAttribute("disabled", "true");
     startButton.style.backgroundColor = "black";
-    startButton.querySelector(".button__label").innerHTML = disabledButtonText;
+    startButton.innerText = disabledButtonText;
 }
 
 function enableStart() {

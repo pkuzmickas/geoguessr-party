@@ -1,3 +1,5 @@
+const host = 'ec2-35-179-97-149.eu-west-2.compute.amazonaws.com';
+
 // Player object: {name: string, score: string, leader: boolean}
 let players = [];
 const exitButton = document.getElementById("exitGame");
@@ -12,7 +14,7 @@ let contentConn;
 // Current player of the tab
 let currentPlayer;
 // Socket connection to the server
-let socket;
+let backgroundScript = chrome.runtime.connect({ name: "background" });
 
 // pre-game, in-game, results
 let gameStage = "pre-game";
@@ -37,10 +39,10 @@ function onConnectListener(port) {
     console.log("message in panel", msg);
     switch (msg.cmd) {
       case "init":
-        initSockets(msg.payload.name, msg.payload.score, msg.payload.roomId);
+        console.log("posting TO bg")
+        backgroundScript.postMessage({cmd: 'init', payload: msg.payload})
         break;
       case "set_score":
-        socket.send(createSocketMessage("set_score", { totalScore: msg.payload.totalScore }));
         break;
       case "set_game_stage":
         updateGameStage(msg.payload);
@@ -48,11 +50,10 @@ function onConnectListener(port) {
         break;
       case "close":
         console.log("closed the socket connection");
-        socket.close();
+        sendSocketMessage('close');
         break;
       case "hide_scores":
         updateGameStage("final-results");
-        socket.send(createSocketMessage("set_score", { totalScore: "HIDDEN" }));
         break;
     }
     console.log("received at panel", msg);
@@ -134,45 +135,34 @@ function buildChat() {
   }
 }
 
-// Messages from backend sockets
-// Parameters: name - new player name, score - new player score
-function initSockets(name, score, roomId) {
-  socket = io("ws://localhost:3000");
-  socket.send(createSocketMessage("add_player", { name, score, roomId }))
-  socket.on("message", data => {
-    const msg = JSON.parse(data);
-    console.log("received from socket:", msg);
-    // Responding to messages from the server 
-    switch (msg.cmd) {
-      case "update_room":
-        console.log("updating room, payload:", msg.payload);
-        players = Object.values(msg.payload.players);
-        chat = [...msg.payload.chat];
-        // Mostly for leader election
-        const currentPlayerUpdated = players.find((player) => player.id === currentPlayer.id);
-        updateCurrentPlayer(currentPlayerUpdated);
-        buildPlayerList();
-        buildChat();
-        break;
-      case "set_current_player":
-        updateCurrentPlayer(msg.payload);
-        break;
-      case "start_game":
-        msgContent("start_game");
-        break;
-      case "continue_game":
-        updateGameStage("in-game");
-        msgContent("continue_game");
-        break;
-      default:
-        break;
-    }
-  });
-}
-
-function createSocketMessage(cmd, payload) {
-  return JSON.stringify({ cmd, payload });
-}
+// SOCKET IO THROUGH BG PROXY 
+backgroundScript.onMessage.addListener((msg) => {
+  console.log("MSG FROM BG IN PANEL:", msg)
+  switch (msg.cmd) {
+    case "update_room":
+      console.log("updating room, payload:", msg.payload);
+      players = Object.values(msg.payload.players);
+      chat = [...msg.payload.chat];
+      // Mostly for leader election
+      const currentPlayerUpdated = players.find((player) => player.id === currentPlayer.id);
+      updateCurrentPlayer(currentPlayerUpdated);
+      buildPlayerList();
+      buildChat();
+      break;
+    case "set_current_player":
+      updateCurrentPlayer(msg.payload);
+      break;
+    case "start_game":
+      msgContent("start_game");
+      break;
+    case "continue_game":
+      updateGameStage("in-game");
+      msgContent("continue_game");
+      break;
+    default:
+      break;
+  }
+});
 
 async function msgContent(cmd, payload) {
   if (!contentConn) {
@@ -187,18 +177,18 @@ exitButton.addEventListener("click", async () => {
 });
 
 startButton.addEventListener("click", async () => {
-  socket.send(createSocketMessage("start_game"))
+  sendSocketMessage('start_game');
   startContainer.style.display = "none";
   startButton.style.display = "none";
 });
 
 continueButton.addEventListener("click", async () => {
-  socket.send(createSocketMessage("continue_game"))
+  sendSocketMessage('continue_game');
   startContainer.style.display = "none";
 });
 
 revealButton.addEventListener("click", async () => {
-  socket.send(createSocketMessage("continue_game"))
+  sendSocketMessage('continue_game');
   startContainer.style.display = "none";
 });
 
@@ -221,7 +211,7 @@ function updateGameStage(newStage) {
   gameStage = newStage;
   switch (gameStage) {
     case "ads":
-      socket.send(createSocketMessage("ads_message"));
+      sendSocketMessage('ads_message');
       break;
   }
 }
@@ -269,7 +259,11 @@ function updateControlPanel() {
 }
 
 function sendChatMessage(message) {
-  socket.send(createSocketMessage("chat_message", { message }));
+  sendSocketMessage("chat_message", { message });
+}
+
+function sendSocketMessage(cmd, payload) {
+  backgroundScript.postMessage({ cmd: 'to_socket', payload: { cmd, payload } });
 }
 
 //interstitial-message-continue-to-game

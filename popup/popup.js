@@ -1,10 +1,12 @@
+const host = 'ec2-35-179-97-149.eu-west-2.compute.amazonaws.com';
+
 const startButton = document.getElementById("startButton");
 const exitButton = document.getElementById("exitButton");
 
 let tab;
 let port;
 
-let api = "http://localhost:3000"
+let api = `http://${host}:3000`
 
 initTabAndPort();
 
