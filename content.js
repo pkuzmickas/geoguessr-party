@@ -63,8 +63,8 @@ function openPanel() {
     iframe.style.width = panel.size;
     iframe.style.display = "block";
     nextBody.style.width = "calc(100% - 400px)";
-    if(header)
-    header.style.width = "calc(100% - 400px)";
+    if (header)
+        header.style.width = "calc(100% - 400px)";
     connectToPanel();
 }
 
@@ -218,8 +218,8 @@ function startTimer(element, executeAfter) {
 function observeForResults() {
     console.log("observing for results");
     // Select the node that will be observed for mutations
-    const targetNode = document.querySelector('.layout__main');
-
+    const targetNode = document.querySelector('.version3-in-game_layout__13T8U');
+    console.log('target node', targetNode)
     // Options for the observer (which mutations to observe)
     const config = { attributes: false, childList: true, subtree: false };
 
@@ -227,7 +227,7 @@ function observeForResults() {
     const callback = function (mutationsList, observer) {
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
-                const result = document.querySelector('.result');
+                const result = document.querySelector('.result-layout_root__pCZux');
                 // Reached the result screen
                 if (result) {
                     // Check if it's the ad page
@@ -265,10 +265,12 @@ function handleResultsScreen(result) {
         msgPanel("hide_scores");
     } else {
         // Update the score if not final results
-        const totalScore =
-            document.querySelector(".table__row.table__row--highlighted span.highscore__score")?.childNodes[1]?.data.toString().replace(",", "")
-            ??
-            document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
+        let totalScore =
+            document.querySelector(".table_tr__26Vlw.table_highlightedRow__1C3FN")?.childNodes[3].innerText?.replace(",", "")
+        // ??
+        // document.querySelector(".score-bar__label")?.childNodes[1]?.data.toString().replace(",", "")
+        if (totalScore) totalScore = parseInt(totalScore);
+        console.log("GOT TOTAL SCORE:", totalScore);
         msgPanel("set_score", { totalScore });
     }
     disableContinue(nextRoundButton);
@@ -321,8 +323,9 @@ function resetGameToNormal() {
         results.style.width = "100%";
         const continueButton = document.querySelector('[data-qa="close-round-result"]');
         if (continueButton) {
-            const continueButtonLabel = continueButton.querySelector(".button__label");
-            continueButtonLabel.innerHTML = "PLAY NEXT ROUND";
+            // TODO: tidy
+            // const continueButtonLabel = continueButton.querySelector(".button__label");
+            continueButton.innerText = "PLAY NEXT ROUND";
             continueButton.removeAttribute("disabled");
             continueButton.style.backgroundColor = "var(--color-primary-60)";
         }

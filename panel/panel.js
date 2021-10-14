@@ -43,6 +43,7 @@ function onConnectListener(port) {
         backgroundScript.postMessage({cmd: 'init', payload: msg.payload})
         break;
       case "set_score":
+        sendSocketMessage('set_score', {totalScore: msg.payload.totalScore});
         break;
       case "set_game_stage":
         updateGameStage(msg.payload);
