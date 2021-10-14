@@ -196,7 +196,9 @@ function startGame() {
 // executeAfter - function to execute after timer
 function startTimer(element, executeAfter) {
     let counter = 3;
-    const label = element.querySelector(".button__label");
+    // TODO: tidy
+    // const label = element.querySelector(".button__label");
+    const label = element;
     if (label) {
         label.style.fontSize = "36px";
         label.innerHTML = "GET READY...";
