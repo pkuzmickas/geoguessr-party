@@ -55,7 +55,7 @@ function initPanel() {
 
     // Reduce body/header size
     nextBody = document.getElementById("__next");
-    header = document.querySelector("header");
+    // header = document.querySelector("header");
 }
 
 function openPanel() {
@@ -63,8 +63,8 @@ function openPanel() {
     iframe.style.width = panel.size;
     iframe.style.display = "block";
     nextBody.style.width = "calc(100% - 400px)";
-    if (header)
-        header.style.width = "calc(100% - 400px)";
+    // if (header)
+    //     header.style.width = "calc(100% - 400px)";
     connectToPanel();
 }
 
@@ -77,7 +77,7 @@ function closePanel() {
     iframe.parentNode.removeChild(iframe);
     iframe = undefined;
     nextBody.style.width = "100%";
-    header.style.width = "100%";
+    // header.style.width = "100%";
     resetGameToNormal();
 }
 
@@ -95,10 +95,12 @@ function disableStart() {
 function enableStart() {
     startButton.removeAttribute("disabled");
     startButton.style.backgroundColor = previousStartButton.style.backgroundColor;
-    const label = startButton.querySelector(".button__label");
-    const previousLabel = previousStartButton.querySelector(".button__label")
-    label.innerHTML = previousLabel.innerHTML;
-    label.style = previousLabel.style;
+    // const label = startButton.querySelector(".button_label__1mgc7");
+    // const previousLabel = previousStartButton.querySelector(".button_label__1mgc7")
+    startButton.innerText = previousStartButton.innerText;
+    startButton.style = previousStartButton.style;
+    // label.innerHTML = previousLabel.innerHTML;
+    // label.style = previousLabel.style;
 }
 
 // Listening to messages to content
@@ -231,9 +233,10 @@ function observeForResults() {
                 // Reached the result screen
                 if (result) {
                     // Check if it's the ad page
-                    const ad = result.querySelector('.interstitial-message');
+                    const ad = result.querySelector('.interstitial-message_root__2qsY1');
                     if (ad) {
                         msgPanel("set_game_stage", "ads");
+                        console.log('set game s tate to ads');
                         const continueBtn = ad.querySelector("[data-qa='interstitial-message-continue-to-game']");
                         continueBtn.addEventListener('click', () => {
                             handleResultsScreen(result);
@@ -281,15 +284,17 @@ function disableContinue(nextRoundButton) {
     if (nextRoundButton) {
         nextRoundButton.setAttribute("disabled", true);
         nextRoundButton.style.backgroundColor = "black";
-        const btnText = nextRoundButton.querySelector(".button__label");
-        if (btnText) {
-            setTimeout(() => {
-                btnText.innerHTML = disabledButtonText;
-                if (nextRoundButton.innerText === lastResultIndicator) {
-                    btnText.innerHTML = lastResultButtonText;
-                }
-            }, 500);
-        }
+        // const btnText = nextRoundButton.querySelector(".button__label");
+        // if (btnText) {
+        setTimeout(() => {
+            // btnText.innerHTML = disabledButtonText;
+            if (nextRoundButton.innerText === lastResultIndicator) {
+                nextRoundButton.innerText = lastResultButtonText;
+            } else {
+                nextRoundButton.innerText = disabledButtonText;
+            }
+        }, 500);
+        // }
     }
 }
 
@@ -318,7 +323,7 @@ function resetGameToNormal() {
         const canvasWidth = gameCanvas.clientWidth;
         gameCanvas.setAttribute("width", canvasWidth);
     }
-    const results = document.querySelector(".result");
+    const results = document.querySelector(".result-layout_root__pCZux");
     if (results) {
         results.style.width = "100%";
         const continueButton = document.querySelector('[data-qa="close-round-result"]');

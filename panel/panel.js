@@ -51,10 +51,11 @@ function onConnectListener(port) {
         break;
       case "close":
         console.log("closed the socket connection");
-        sendSocketMessage('close');
+        backgroundScript.postMessage({cmd: 'close'})
         break;
       case "hide_scores":
         updateGameStage("final-results");
+        sendSocketMessage('set_score', {totalScore: "HIDDEN"});
         break;
     }
     console.log("received at panel", msg);
